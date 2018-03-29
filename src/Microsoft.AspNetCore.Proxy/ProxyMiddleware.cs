@@ -52,8 +52,60 @@ namespace Microsoft.AspNetCore.Proxy
                 throw new ArgumentNullException(nameof(context));
             }
 
-            var uri = new Uri(UriHelper.BuildAbsolute(_options.Scheme, _options.Host, _options.PathBase, context.Request.Path, context.Request.QueryString.Add(_options.AppendQuery)));
+            Uri uri = TryBuildDynamicUri(context);
+
+            if (uri == null)
+            {
+                uri = new Uri(UriHelper.BuildAbsolute(_options.Scheme, _options.Host, _options.PathBase, context.Request.Path, context.Request.QueryString.Add(_options.AppendQuery)));
+            }
+
             return context.ProxyRequest(uri);
+        }
+
+        private Uri TryBuildDynamicUri(HttpContext context)
+        {
+            if (!_options.UseDynamicSchemeAndHost)
+            {
+                return null;
+            }
+            
+            var steps = GetPathSteps(3, context);
+
+            if (steps == null)
+            {
+                return null;
+            }
+
+            var scheme = steps[0];
+            var host = steps[1];
+            var path = steps[2];
+
+            path = path == null ? null : $"/{path.TrimStart('/')}";
+
+            return new Uri(UriHelper.BuildAbsolute(scheme, new HostString(host, scheme == "https" ? 443 : 80), _options.PathBase, new PathString(path), context.Request.QueryString.Add(_options.AppendQuery)));
+        }
+
+        private string[] GetPathSteps(int stepCount, HttpContext context)
+        {
+            var pathTrimmed = context.Request.Path.Value.TrimStart('/');
+            var pathTrimmedSplit = pathTrimmed.Split('/');
+
+            if (pathTrimmedSplit.Length < 2)
+            {
+                return null;
+            }
+
+            var steps = new string[stepCount];
+            steps[0] = pathTrimmedSplit[0];
+            steps[1] = pathTrimmedSplit[1];
+
+            if (pathTrimmedSplit.Length > 2)
+            {
+                var startIndex = steps[0].Length + steps[1].Length + 2;
+                steps[2] = pathTrimmed.Substring(startIndex, pathTrimmed.Length - startIndex);
+            }
+
+            return steps;
         }
     }
 }

@@ -29,5 +29,10 @@ namespace Microsoft.AspNetCore.Proxy
         /// Query string parameters to append to each request
         /// </summary>
         public QueryString AppendQuery { get; set; }
+
+        /// <summary>
+        /// Infers the scheme and host from the original path i.e. localhost/https/www.foo.com/bar equates to https://www.foo.com/bar
+        /// </summary>
+        public bool UseDynamicSchemeAndHost { get; set; }
     }
 }
