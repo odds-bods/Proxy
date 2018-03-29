@@ -16,4 +16,8 @@
     <ProjectReference Include="..\Microsoft.AspNetCore.Proxy\Microsoft.AspNetCore.Proxy.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
+  </PropertyGroup>
+
 </Project>
